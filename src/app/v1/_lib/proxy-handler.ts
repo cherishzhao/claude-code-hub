@@ -3,12 +3,14 @@ import { getCachedSystemSettings } from "@/lib/config";
 import { logger } from "@/lib/logger";
 import { ProxyStatusTracker } from "@/lib/proxy-status-tracker";
 import { SessionTracker } from "@/lib/session-tracker";
+import { enqueueQueryLog } from "@/repository/query-log-write-buffer";
 import { ProxyErrorHandler } from "./proxy/error-handler";
 import { attachSessionIdToErrorResponse } from "./proxy/error-session-id";
 import { ProxyError } from "./proxy/errors";
 import { detectClientFormat, detectFormatByEndpoint } from "./proxy/format-mapper";
 import { ProxyForwarder } from "./proxy/forwarder";
 import { GuardPipelineBuilder } from "./proxy/guard-pipeline";
+import { extractUserQuery } from "./proxy/query-extractor";
 import { ProxyResponseHandler } from "./proxy/response-handler";
 import { normalizeResponseInput } from "./proxy/response-input-rectifier";
 import { ProxyResponses } from "./proxy/responses";
@@ -16,10 +18,11 @@ import { ProxySession } from "./proxy/session";
 
 export async function handleProxyRequest(c: Context): Promise<Response> {
   let session: ProxySession | null = null;
+  let systemSettings: Awaited<ReturnType<typeof getCachedSystemSettings>> | null = null;
   try {
     session = await ProxySession.fromContext(c);
     try {
-      const systemSettings = await getCachedSystemSettings();
+      systemSettings = await getCachedSystemSettings();
       session.setHighConcurrencyModeEnabled(systemSettings.enableHighConcurrencyMode ?? false);
       session.setRawCrossProviderFallbackEnabled(
         systemSettings.allowNonConversationEndpointProviderFallback ?? true
@@ -98,6 +101,22 @@ export async function handleProxyRequest(c: Context): Promise<Response> {
         providerName: session.provider.name,
         model: session.request.model || "unknown",
       });
+    }
+
+    if (session.messageContext && systemSettings?.enableQueryLogging) {
+      const queryContent = extractUserQuery(session);
+      if (queryContent !== null) {
+        enqueueQueryLog({
+          messageRequestId: session.messageContext.id,
+          userId: session.messageContext.user.id,
+          sessionId: session.sessionId ?? null,
+          requestSequence: session.getRequestSequence(),
+          model: session.request.model || null,
+          endpoint: session.getEndpoint() || null,
+          queryContent,
+          queryFormat: session.originalFormat,
+        });
+      }
     }
 
     session.recordForwardStart();

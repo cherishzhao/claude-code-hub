@@ -137,3 +137,7 @@ Critical variables (see `.env.example` for full list):
 - `ENABLE_RATE_LIMIT`: Toggle rate limiting
 - `SESSION_TTL`: Session cache TTL (default 300s)
 - `AUTO_MIGRATE`: Auto-run migrations on startup
+
+
+## 语言
+任何使用中文回复

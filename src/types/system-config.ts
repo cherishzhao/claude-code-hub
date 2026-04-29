@@ -103,6 +103,10 @@ export interface SystemSettings {
   ipExtractionConfig: IpExtractionConfig | null;
   // 是否启用 IP 归属地查询
   ipGeoLookupEnabled: boolean;
+  // 查询日志配置
+  enableQueryLogging: boolean;
+  queryLogRetentionDays?: number;
+
   // Public Status 全局配置
   publicStatusWindowHours: number;
   publicStatusAggregationIntervalMinutes: number;
@@ -189,6 +193,10 @@ export interface UpdateSystemSettingsInput {
   ipExtractionConfig?: IpExtractionConfig | null;
   // 是否启用 IP 归属地查询（可选）
   ipGeoLookupEnabled?: boolean;
+  // 查询日志配置（可选）
+  enableQueryLogging?: boolean;
+  queryLogRetentionDays?: number;
+
   // Public Status 全局配置（可选）
   publicStatusWindowHours?: number;
   publicStatusAggregationIntervalMinutes?: number;

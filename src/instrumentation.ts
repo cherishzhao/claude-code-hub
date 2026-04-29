@@ -259,6 +259,24 @@ export async function register() {
         }
 
         try {
+          const { stopQueryLogWriteBuffer } = await import("@/repository/query-log-write-buffer");
+          await stopQueryLogWriteBuffer();
+        } catch (error) {
+          logger.warn("[Instrumentation] Failed to stop query log write buffer", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
+        try {
+          const { stopQueryLogCleanup } = await import("@/lib/log-cleanup/query-log-cleanup");
+          stopQueryLogCleanup();
+        } catch (error) {
+          logger.warn("[Instrumentation] Failed to stop query log cleanup", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
+        try {
           if (instrumentationState.__CCH_CLOUD_PRICE_SYNC_INTERVAL_ID__) {
             clearInterval(instrumentationState.__CCH_CLOUD_PRICE_SYNC_INTERVAL_ID__);
             instrumentationState.__CCH_CLOUD_PRICE_SYNC_INTERVAL_ID__ = undefined;
@@ -448,6 +466,15 @@ export async function register() {
         });
       }
 
+      try {
+        const { startQueryLogCleanup } = await import("@/lib/log-cleanup/query-log-cleanup");
+        startQueryLogCleanup();
+      } catch (error) {
+        logger.warn("[Instrumentation] Failed to start query log cleanup", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
       logger.info("Application ready");
     }
     // 开发环境: 执行迁移 + 初始化价格表（禁用 Bull Queue 避免 Turbopack 冲突）
@@ -585,6 +612,15 @@ export async function register() {
           startEndpointProbeLogCleanup();
         } catch (error) {
           logger.warn("[Instrumentation] Failed to start endpoint probe log cleanup", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
+        try {
+          const { startQueryLogCleanup } = await import("@/lib/log-cleanup/query-log-cleanup");
+          startQueryLogCleanup();
+        } catch (error) {
+          logger.warn("[Instrumentation] Failed to start query log cleanup", {
             error: error instanceof Error ? error.message : String(error),
           });
         }

@@ -835,6 +835,10 @@ export const systemSettings = pgTable('system_settings', {
   ipExtractionConfig: jsonb('ip_extraction_config').$type<IpExtractionConfig>(),
   // 是否启用 IP 归属地查询（默认开启）
   ipGeoLookupEnabled: boolean('ip_geo_lookup_enabled').notNull().default(true),
+  // 查询日志配置
+  enableQueryLogging: boolean('enable_query_logging').notNull().default(false),
+  queryLogRetentionDays: integer('query_log_retention_days').default(30),
+
   // Public Status 全局配置
   publicStatusWindowHours: integer('public_status_window_hours').notNull().default(24),
   publicStatusAggregationIntervalMinutes: integer('public_status_aggregation_interval_minutes')
@@ -1127,4 +1131,25 @@ export const messageRequestRelations = relations(messageRequest, ({ one }) => ({
     fields: [messageRequest.providerId],
     references: [providers.id],
   }),
+}));
+
+// Query Log table
+export const queryLog = pgTable('query_log', {
+  id: serial('id').primaryKey(),
+  messageRequestId: integer('message_request_id').notNull(),
+  userId: integer('user_id').notNull(),
+  sessionId: varchar('session_id', { length: 64 }),
+  requestSequence: integer('request_sequence').default(1),
+  model: varchar('model', { length: 128 }),
+  endpoint: varchar('endpoint', { length: 256 }),
+  queryContent: text('query_content').notNull(),
+  queryFormat: varchar('query_format', { length: 20 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  queryLogUserCreatedAtIdx: index('idx_query_log_user_created_at')
+    .on(table.userId, table.createdAt),
+  queryLogSessionSeqIdx: index('idx_query_log_session_seq')
+    .on(table.sessionId, table.requestSequence),
+  queryLogCreatedAtIdx: index('idx_query_log_created_at')
+    .on(table.createdAt),
 }));

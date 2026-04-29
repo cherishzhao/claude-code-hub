@@ -175,6 +175,8 @@ function createFallbackSettings(): SystemSettings {
     quotaLeasePercentWeekly: 0.05,
     quotaLeasePercentMonthly: 0.05,
     quotaLeaseCapUsd: null,
+    enableQueryLogging: false,
+    queryLogRetentionDays: 30,
     publicStatusWindowHours: 24,
     publicStatusAggregationIntervalMinutes: 5,
     ipExtractionConfig: null,
@@ -682,6 +684,13 @@ export async function updateSystemSettings(
       updates.quotaLeaseCapUsd =
         payload.quotaLeaseCapUsd === null ? null : String(payload.quotaLeaseCapUsd);
     }
+    if (payload.enableQueryLogging !== undefined) {
+      updates.enableQueryLogging = payload.enableQueryLogging;
+    }
+    if (payload.queryLogRetentionDays !== undefined) {
+      updates.queryLogRetentionDays = payload.queryLogRetentionDays;
+    }
+
     if (payload.publicStatusWindowHours !== undefined) {
       updates.publicStatusWindowHours = payload.publicStatusWindowHours;
     }
